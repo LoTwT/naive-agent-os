@@ -48,5 +48,6 @@ check(
   "接入 CLI 前需要安装；无 Anthropic 订阅可使用 DeepSeek",
 )
 check("Codex CLI", hasCommand("codex"), "后续接入 Codex 前再安装")
+check("Dimcode", hasCommand("dim"), "后续接入 Dimcode 前再安装")
 
 console.log("\n骨架就绪。下一步：解剖 AI CLI 的两副面孔。\n")
