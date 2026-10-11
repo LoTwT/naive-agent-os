@@ -34,7 +34,7 @@
     "pre-commit": "pnpm lint-staged"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs}": "npm run lint",
+    "*.{js,jsx,ts,tsx,mjs,cjs}": "pnpm run lint",
     "*": "oxfmt --no-error-on-unmatched-pattern"
   },
   "devEngines": {
