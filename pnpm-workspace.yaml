@@ -1,0 +1,4 @@
+allowBuilds:
+  esbuild: true
+  pnpm: true
+  simple-git-hooks: true
