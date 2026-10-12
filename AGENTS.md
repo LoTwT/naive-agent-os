@@ -6,6 +6,7 @@
 ## 运行
 
 pnpm dev（tsx watch）/ pnpm start / pnpm build
+src/probe-cli.ts — AI CLI 事件流解析器（stdin 读 headless JSON 行，打印时间线）
 
 ## 约定
 

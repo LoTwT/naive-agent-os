@@ -14,7 +14,8 @@
     "prepare": "simple-git-hooks",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "fmt": "oxfmt"
+    "fmt": "oxfmt",
+    "probe:cli": "tsx src/probe-cli.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.7",
