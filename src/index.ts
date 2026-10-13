@@ -3,7 +3,11 @@ import { execFileSync } from "child_process"
 import { existsSync } from "fs"
 import process from "process"
 
+import { startBot } from "./im/lark"
 import { version, engines } from "../package.json"
+
+const appId = process.env.BOT_A_APP_ID
+const appSecret = process.env.BOT_A_APP_SECRET
 
 function hasCommand(cmd: string) {
   try {
@@ -50,4 +54,24 @@ check(
 check("Codex CLI", hasCommand("codex"), "后续接入 Codex 前再安装")
 check("Dimcode", hasCommand("dim"), "后续接入 Dimcode 前再安装")
 
-console.log("\n骨架就绪。下一步：解剖 AI CLI 的两副面孔。\n")
+if (!appId || !appSecret) {
+  console.error("缺少 BOT_A_APP_ID / BOT_A_APP_SECRET，请检查 .env")
+  process.exit(1)
+}
+
+console.log("Naive Agent OS 启动，正在建立飞书长连接")
+
+startBot({
+  appId,
+  appSecret,
+  onMessage: async (msg, bot) => {
+    console.log(
+      `[收到] chat=${msg.chatId} type=${msg.chatType} sender=${msg.senderOpenId} 内容: ${msg.text}`,
+    )
+    const replyId = await bot.reply(
+      msg.messageId,
+      `<at user_id="${process.env.OWNER_OPEN_ID}"></at> 收到，这条是点名回复`,
+    )
+    console.log(`[已回] message_id=${replyId}`)
+  },
+})
