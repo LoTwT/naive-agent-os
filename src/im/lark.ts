@@ -5,6 +5,7 @@ import * as Lark from "@larksuiteoapi/node-sdk"
 import { parseMentions, type Mention } from "./message-parser"
 import { mkdir } from "fs/promises"
 import { extname, join } from "path"
+import { CardJson } from "./card"
 
 export interface IncomingMessage {
   messageId: string
@@ -54,6 +55,12 @@ export interface Bot {
     saveDir: string,
     fileName?: string,
   ) => Promise<string>
+  replyCard: (
+    messageId: string,
+    card: CardJson,
+    replyInThread?: boolean,
+  ) => Promise<string | undefined>
+  updateCard: (messageId: string, card: CardJson) => Promise<void>
 }
 
 function extractText(messageType: string, content: string): string {
@@ -145,6 +152,33 @@ export function startBot(opts: BotOptions): Bot {
       await mkdir(saveDir, { recursive: true })
       await res.writeFile(savePath)
       return savePath
+    },
+    async replyCard(messageId, card, replyInThread = false) {
+      const res = await client.im.v1.message.reply({
+        path: {
+          message_id: messageId,
+        },
+        data: {
+          msg_type: "interactive",
+          content: JSON.stringify(card),
+          ...(replyInThread
+            ? {
+                reply_in_thread: true,
+              }
+            : {}),
+        },
+      })
+      return res.data?.message_id
+    },
+    async updateCard(messageId, card) {
+      await client.im.v1.message.patch({
+        path: {
+          message_id: messageId,
+        },
+        data: {
+          content: JSON.stringify(card),
+        },
+      })
     },
   }
 
