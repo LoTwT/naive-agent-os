@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto"
-import type { SessionStore } from "./session-store"
-
-export type CliId = "claude"
+import type { CliId } from "../cli/types.js"
+import type { SessionStore } from "./session-store.js"
 
 export type SessionStatus = "creating" | "active" | "idle" | "closed"
 
@@ -61,6 +60,20 @@ export class SessionManager {
     this.store = options.store
   }
 
+  static async open(
+    options: SessionManagerOptions = {},
+  ): Promise<SessionManager> {
+    const manager = new SessionManager(options)
+    const restored = (await options.store?.load()) ?? []
+    for (const session of restored) {
+      manager.sessions.set(
+        sessionKey(session.chatId, session.threadId),
+        session,
+      )
+    }
+    return manager
+  }
+
   get size(): number {
     return this.sessions.size
   }
@@ -71,7 +84,10 @@ export class SessionManager {
     )
   }
 
-  async resolve(message: MessageAddress): Promise<ResolvedSession> {
+  async resolve(
+    message: MessageAddress,
+    cliId: CliId = "claude",
+  ): Promise<ResolvedSession> {
     const threadId = topicIdOf(message)
     const key = sessionKey(message.chatId, threadId)
     const existing = this.sessions.get(key)
@@ -82,7 +98,7 @@ export class SessionManager {
       id: this.createId(),
       threadId,
       chatId: message.chatId,
-      cliId: "claude",
+      cliId,
       status: "creating",
       createdAt: now,
       updatedAt: now,
@@ -112,7 +128,6 @@ export class SessionManager {
       status: nextStatus,
       updatedAt: this.now().toISOString(),
     }
-
     const key = sessionKey(updated.chatId, updated.threadId)
     this.sessions.set(key, updated)
     try {
@@ -122,24 +137,6 @@ export class SessionManager {
       throw error
     }
     return updated
-  }
-
-  static async open(
-    options: SessionManagerOptions = {},
-  ): Promise<SessionManager> {
-    const manager = new SessionManager(options)
-    const restored = (await options.store?.load()) ?? []
-    for (const session of restored) {
-      manager.sessions.set(
-        sessionKey(session.chatId, session.threadId),
-        session,
-      )
-    }
-    return manager
-  }
-
-  private async persist(): Promise<void> {
-    await this.store?.save([...this.sessions.values()])
   }
 
   async setCliSessionId(
@@ -157,14 +154,16 @@ export class SessionManager {
     }
     const key = sessionKey(updated.chatId, updated.threadId)
     this.sessions.set(key, updated)
-
     try {
       await this.persist()
     } catch (error) {
       if (this.sessions.get(key) === updated) this.sessions.set(key, current)
       throw error
     }
-
     return updated
+  }
+
+  private async persist(): Promise<void> {
+    await this.store?.save([...this.sessions.values()])
   }
 }
