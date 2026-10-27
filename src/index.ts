@@ -63,7 +63,7 @@ await Promise.all(
 )
 for (const missing of await teamRegistry.findMissingSkills()) {
   console.warn(
-    `[Skill] bot=${missing.botId} 找不到 ${missing.skill}，请安装到当前工作目录的 .agents/skills 或 .claude/skills`,
+    `[Skill] bot=${missing.botId} 找不到 ${missing.skill}，请安装到工作区或用户级 Skills 目录`,
   )
 }
 const defaultWorkspaces = Object.fromEntries(
@@ -271,6 +271,7 @@ async function startConfiguredBot(config: BotConfig): Promise<void> {
         config,
         taskText,
         teamRegistry.contextFor(config.id),
+        agentOsConfig.defaultProductDeliveryMode,
       )
       const taskCardTitle = isCompacting ? "整理上下文" : cliAdapter.displayName
       console.log(
@@ -493,14 +494,18 @@ async function startConfiguredBot(config: BotConfig): Promise<void> {
             return
           }
           const productSpecRequest =
-            !isCompacting && config.skills.includes("to-spec")
+            !isCompacting &&
+            (config.skills.includes("to-spec") ||
+              config.skills.includes("lark-doc"))
               ? findProductSpecRequest(result.toolCalls)
               : undefined
           if (productSpecRequest) {
-            await assertProductSpecDocuments(
-              session.workspaceDir,
-              productSpecRequest,
-            )
+            if (productSpecRequest.deliveryMode === "local") {
+              await assertProductSpecDocuments(
+                session.workspaceDir,
+                productSpecRequest,
+              )
+            }
             if (activeRuns.get(session.id)?.controller === run) {
               activeRuns.delete(session.id)
             }
@@ -517,7 +522,7 @@ async function startConfiguredBot(config: BotConfig): Promise<void> {
               bot,
               replyToMessageId: msg.messageId,
               target: { openId: msg.senderOpenId, name: "" },
-              text: "Spec 和 Tickets 已经落盘，请查看上方产物卡片。",
+              text: "产品方案已生成，请查看上方确认卡。",
               replyInThread: hasThread,
             })
             console.log("[产品文档] 已展示待确认产物")
