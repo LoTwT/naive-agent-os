@@ -15,10 +15,12 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
-    "probe:cli": "tsx src/probe-cli.ts"
+    "probe:cli": "tsx src/probe-cli.ts",
+    "probe:tool": "tsx src/probe-app-tool.ts"
   },
   "dependencies": {
     "@larksuiteoapi/node-sdk": "^1.74.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "dotenv": "^18.0.7",
     "zod": "^4.6.5"
   },
